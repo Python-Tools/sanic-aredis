@@ -1,6 +1,15 @@
+# @Author: Huang Sizhe
+# @Date:   10-Apr-2017
+# @Email:  hsz1273327@gmail.com
+# @Last modified by:   Huang Sizhe
+# @Last modified time: 10-Apr-2017
+# @License: MIT
+
+
+
 __all__=["Core"]
 
-import aredis
+from sanic_redis.sanic_strict_redis import SaincStrictRedis
 
 class Core:
 
@@ -19,6 +28,7 @@ class Core:
     def init_app(self, app):
         """绑定app
         """
+        self.app = app
         if not self.uri:
             if app.config.REDIS_URI:
                 self.__uri = app.config.REDIS_URI
@@ -27,7 +37,10 @@ class Core:
 
         if "extensions" not in app.__dir__():
             app.extensions = {}
-        redis = aredis.StrictRedis.from_url(self.uri)
+        redis = SaincStrictRedis.from_url(self.uri)
         self.redis = redis
         app.extensions['SanicRedis'] = self
         return redis
+
+    def init_session(self,db):
+        pass

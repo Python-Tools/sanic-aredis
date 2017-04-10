@@ -17,18 +17,18 @@ import ujson
 app = Sanic(__name__)
 #redis_pool = aredis.ConnectionPool(host='localhost', port=6379, db=0)
 redis = Redis("redis://localhost:6379/0")
-db = redis(app)
+cachedb = redis(app)
 
 @app.get("/test-my-key/<key>")
 async def handle(request,key):
-    val = await db.get(key)
+    val = await cachedb.get(key)
     return response.text(val.decode('utf-8'))
 
 @app.post("/test-my-key")
 async def handle(request):
     doc = request.json
     for k,v in doc.items():
-        await db.set(k, v)
+        await cachedb.set(k, v)
     return json({"result":True})
 
 if __name__ == '__main__':
