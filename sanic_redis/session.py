@@ -5,11 +5,12 @@
 # @Last modified time: 10-Apr-2017
 # @License: MIT
 
-
-
+import uuid
+import ujson
+import aredis
 from sanic_session.base import BaseSessionInterface, SessionDict
 
-class Session(BaseSessionInterface):
+class AredisSessionInterface(BaseSessionInterface):
     def __init__(
             self,redis_db,
             domain: str=None, expiry: int = 2592000,
@@ -82,8 +83,8 @@ class Session(BaseSessionInterface):
         """
         if 'session' not in request:
             return
-
-        redis_connection = await self.redis_getter()
+        redis_connection = self.redis_db
+        #redis_connection = await self.redis_getter()
         key = self.prefix + request['session'].sid
         if not request['session']:
             await redis_connection.delete([key])
@@ -98,3 +99,50 @@ class Session(BaseSessionInterface):
         await redis_connection.setex(key, self.expiry, val)
 
         self._set_cookie_expiration(request, response)
+
+
+class Core:
+
+    @property
+    def uri(self):
+        return self.__uri
+    def __call__(self,app):
+        if app:
+            return self.init_app(app)
+        else:
+            raise AttributeError("need a sanic app to init the extension")
+
+    def __init__(self,uri=None):
+        self.__uri = uri
+
+    def init_app(self, app):
+        """绑定app
+        """
+        self.app = app
+        if not self.uri:
+            if app.config.REDIS_URI:
+                self.__uri = app.config.REDIS_URI
+            else:
+                raise AssertionError("need a db uri")
+
+        if "extensions" not in app.__dir__():
+            app.extensions = {}
+        redis = aredis.StrictRedis.from_url(self.uri)
+        session = AredisSessionInterface(redis,prefix=app.name+'-session:')
+        self.session = session
+        app.extensions['Session'] = self
+
+        @app.middleware('request')
+        async def add_session_to_request(request):
+            # before each request initialize a session
+            # using the client's request
+            await session.open(request)
+
+
+        @app.middleware('response')
+        async def save_session(request, response):
+            # after each request save the session,
+            # pass the response to set client cookies
+            await session.save(request, response)
+
+        return app

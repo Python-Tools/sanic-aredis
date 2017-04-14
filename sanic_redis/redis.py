@@ -8,9 +8,7 @@
 
 
 __all__=["Core"]
-
-from sanic_redis.sanic_strict_redis import SaincStrictRedis
-
+import aredis
 class Core:
 
     @property
@@ -37,10 +35,7 @@ class Core:
 
         if "extensions" not in app.__dir__():
             app.extensions = {}
-        redis = SaincStrictRedis.from_url(self.uri)
+        redis = aredis.StrictRedis.from_url(self.uri)
         self.redis = redis
-        app.extensions['SanicRedis'] = self
+        app.extensions['Aredis'] = self
         return redis
-
-    def init_session(self,db):
-        pass

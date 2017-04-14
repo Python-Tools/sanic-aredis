@@ -10,26 +10,24 @@
 """ To run this example you need additional aioredis package
 """
 from sanic import Sanic, response
-from sanic.response import json
+from sanic.response import json,text
 # import aioredis
-from sanic_redis import Redis
+from sanic_redis import Session
 import ujson
 app = Sanic(__name__)
 #redis_pool = aredis.ConnectionPool(host='localhost', port=6379, db=0)
-redis = Redis("redis://localhost:6379/0")
-db = redis(app)
+session = Session("redis://localhost:6379/0")
+app2 = session(app)
 
-@app.get("/test-my-key/<key>")
-async def handle(request,key):
-    val = await db.get(key)
-    return response.text(val.decode('utf-8'))
+@app.route("/")
+async def test(request):
+    # interact with the session like a normal dict
+    if not request['session'].get('foo'):
+        request['session']['foo'] = 0
 
-@app.post("/test-my-key")
-async def handle(request):
-    doc = request.json
-    for k,v in doc.items():
-        await db.set(k, v)
-    return json({"result":True})
+    request['session']['foo'] += 1
+    response = text(request['session']['foo'])
+    return response
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)

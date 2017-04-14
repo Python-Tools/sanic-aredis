@@ -15,10 +15,21 @@ from sanic.response import json
 from sanic_redis import Redis
 import ujson
 app = Sanic(__name__)
+class CustomIdentityGenerator(IdentityGenerator):
+
+    def generate(self, key, content):
+        return key
+
+
+def expensive_work(data):
+    """some work that waits for io or occupy cpu"""
+    return data
+
 #redis_pool = aredis.ConnectionPool(host='localhost', port=6379, db=0)
 redis = Redis("redis://localhost:6379/0")
 cachedb = redis(app)
-
+cache = cachedb.cache('example_cache',
+                         identity_generator_class=CustomIdentityGenerator)
 @app.get("/test-my-key/<key>")
 async def handle(request,key):
     val = await cachedb.get(key)
