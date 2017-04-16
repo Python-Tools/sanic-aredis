@@ -116,12 +116,12 @@ class Core:
         self.__uri = uri
 
     def init_app(self, app):
-        """绑定app
+        """绑定app,如果config有REDIS_SESSION_URI,那么可以不用初始化redis_uri
         """
         self.app = app
         if not self.uri:
-            if app.config.REDIS_URI:
-                self.__uri = app.config.REDIS_URI
+            if app.config.REDIS_SESSION_URI:
+                self.__uri = app.config.REDIS_SESSION_URI
             else:
                 raise AssertionError("need a db uri")
 
