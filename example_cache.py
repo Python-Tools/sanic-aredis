@@ -12,35 +12,32 @@
 from sanic import Sanic, response
 from sanic.response import json
 # import aioredis
-from sanic_redis import Redis
-import ujson
+from sanic_redis import Cache
+import time
+
 app = Sanic(__name__)
-class CustomIdentityGenerator(IdentityGenerator):
-
-    def generate(self, key, content):
-        return key
-
 
 def expensive_work(data):
     """some work that waits for io or occupy cpu"""
+    time.sleep(2)
     return data
 
 #redis_pool = aredis.ConnectionPool(host='localhost', port=6379, db=0)
-redis = Redis("redis://localhost:6379/0")
-cachedb = redis(app)
-cache = cachedb.cache('example_cache',
-                         identity_generator_class=CustomIdentityGenerator)
-@app.get("/test-my-key/<key>")
-async def handle(request,key):
-    val = await cachedb.get(key)
-    return response.text(val.decode('utf-8'))
+cachedb = Cache("redis://localhost:6379/0")
+cache = cachedb(app)
 
 @app.post("/test-my-key")
 async def handle(request):
-    doc = request.json
-    for k,v in doc.items():
-        await cachedb.set(k, v)
-    return json({"result":True})
+    data = request.json
+    result = await cache.set('example_key', expensive_work(data), data)
+    return json({"result":cache._gen_identity('example_key', data)})
+
+@app.get("/test-my-key/<key>")
+async def handle(request,key):
+    res = await cache.get_by_key(key)
+    return json(res)
+
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8000)

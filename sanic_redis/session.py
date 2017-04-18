@@ -9,6 +9,7 @@ import uuid
 import ujson
 import aredis
 from sanic_session.base import BaseSessionInterface, SessionDict
+from sanic_redis.base import Base
 
 class AredisSessionInterface(BaseSessionInterface):
     def __init__(
@@ -101,19 +102,11 @@ class AredisSessionInterface(BaseSessionInterface):
         self._set_cookie_expiration(request, response)
 
 
-class Core:
 
-    @property
-    def uri(self):
-        return self.__uri
-    def __call__(self,app):
-        if app:
-            return self.init_app(app)
-        else:
-            raise AttributeError("need a sanic app to init the extension")
+class Core(Base):
 
     def __init__(self,uri=None):
-        self.__uri = uri
+        super().__init__(uri)
 
     def init_app(self, app):
         """绑定app,如果config有REDIS_SESSION_URI,那么可以不用初始化redis_uri
