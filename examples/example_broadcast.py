@@ -33,7 +33,7 @@ async def sub(app, loop):
     await broadcast.subscribe(**{'example_channel1': my_handler})
     global thread
     print("befor")
-    thread = broadcast.run_in_thread(daemon=True)
+    thread = broadcast.sub_in_thread(daemon=True)
 @app.listener("before_server_stop")
 async def sub_close(app, loop):
     global thread
