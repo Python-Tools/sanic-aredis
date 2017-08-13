@@ -9,7 +9,6 @@ import uuid
 import ujson
 import aredis
 from sanic_session.base import BaseSessionInterface, SessionDict
-from sanic_redis.base import Base
 
 class AredisSessionInterface(BaseSessionInterface):
     def __init__(
@@ -103,26 +102,39 @@ class AredisSessionInterface(BaseSessionInterface):
 
 
 
-class Core(Base):
+class Core:
+    """session与其他不太一样,session不提供多数据库支持
+    """
+    @staticmethod
+    def SetConfig(app, uri):
+        app.config.REDIS_SESSION_URI = uri
+        return app
 
-    def __init__(self,uri=None):
-        super().__init__(uri)
+    def __init__(self,app=None):
+        self.session = None
+        if app:
+            self.init_app(app)
+        else:
+            pass
+
+
 
     def init_app(self, app):
         """绑定app,如果config有REDIS_SESSION_URI,那么可以不用初始化redis_uri
         """
-        self.app = app
-        if not self.uri:
-            if app.config.REDIS_SESSION_URI:
-                self.__uri = app.config.REDIS_SESSION_URI
-            else:
-                raise AssertionError("need a db uri")
+        if app.config.REDIS_SESSION_URI and isinstance(app.config.REDIS_SESSION_URI, str):
+            self.REDIS_SESSION_URI = app.config.REDIS_SESSION_URI
+            self.app = app
+            redis = aredis.StrictRedis.from_url(app.config.REDIS_SESSION_URI)
+            session = AredisSessionInterface(redis,prefix=app.name+'-session:')
+            self.session = session
+
+        else:
+            raise ValueError(
+                "nonstandard sanic config REDIS_SESSION_URI,REDIS_SESSION_URI must be a string")
 
         if "extensions" not in app.__dir__():
             app.extensions = {}
-        redis = aredis.StrictRedis.from_url(self.uri)
-        session = AredisSessionInterface(redis,prefix=app.name+'-session:')
-        self.session = session
         app.extensions['Session'] = self
 
         @app.middleware('request')

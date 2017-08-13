@@ -1,4 +1,5 @@
 # sanic-redis
+
 aredis的sanic扩展,具体包括如下几个模块:
 
 + Redis 直接操作redis,与aredis接口基本一致
