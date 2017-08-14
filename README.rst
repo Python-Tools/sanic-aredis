@@ -1,8 +1,8 @@
 
-sanic-redis
+sanic-aredis
 ===============================
 
-version: 0.0.5
+version: 0.0.6
 
 author: hsz
 
@@ -21,7 +21,7 @@ Feature
 Install
 --------------------------------
 
-- ``python -m pip install sanic-redis``
+- ``python -m pip install sanic-aredis``
 
 
 Usage

@@ -6,17 +6,17 @@ from os import path
 REQUIREMETS_DEV_FILE = 'requirements_dev.txt'
 REQUIREMETS_TEST_FILE = 'requirements_test.txt'
 REQUIREMETS_FILE = 'requirements.txt'
-PROJECTNAME = 'sanic-redis'
-VERSION = '0.0.5'
+PROJECTNAME = 'sanic-aredis'
+VERSION = '0.0.6'
 DESCRIPTION = 'simple tools'
 URL = 'https://github.com/Sanic-Extensions/sanic-redis'
 AUTHOR = 'hsz'
 AUTHOR_EMAIL = 'hsz1273327@gmail.com'
-LICENSE = ''
+LICENSE = 'MIT'
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
-    'License :: OSI Approved ::  License',
+    'License :: OSI Approved :: MIT License',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Topic :: Documentation :: Sphinx',
