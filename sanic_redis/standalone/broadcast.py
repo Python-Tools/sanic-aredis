@@ -1,21 +1,26 @@
+import threading
+import asyncio
+import aredis
 class Channel:
     ##todo
     ##
-    def __init__(self,uri:str,name:str,**kwargs):
+    def __init__(self,uri:str,name:str,ignore_subscribe_messages:bool=False,**kwargs):
         self.uri = uri
         self.name = name
+        self.ignore_subscribe_messages=ignore_subscribe_messages
         self.__redis = aredis.StrictRedis.from_url(self.uri)
-        self.__pubsub = self.redis.pubsub(**kwargs)
+        self.__pubsub = self.__redis.pubsub(**kwargs)
 
     def pubsub_reset(self):
         self.__pubsub.close()
+
 
     async def publish(self,message):
         """
         Publish ``message`` on ``channel``.
         Returns the number of subscribers the message was delivered to.
         """
-        return await self.__redis.publish(self.channel, message)
+        return await self.__redis.publish(self.name, message)
     async def channels(self, pattern='*'):
         """
         Return a list of channels that have at least one subscriber
@@ -43,7 +48,7 @@ class Channel:
     async def punsubscribe(self, *args):
         return await self.__pubsub.punsubscribe(*args)
 
-    async def subscribe(self, *args, **kwargs):
+    async def subscribe(self, handler=None):
         """
         Subscribe to channels. Channels supplied as keyword arguments expect
         a channel name as the key and a callable as the value. A channel's
@@ -54,10 +59,13 @@ class Channel:
         如果是字符串,那么就是注册下关注的channel,如果是字典,则相当于回调函数,
         key对应的channel有消息来了就会触发
         """
-        return await self.__pubsub.subscribe(*args, **kwargs)
+        if handler is None:
+            return await self.__pubsub.subscribe(self.name)
+        else:
+            return await self.__pubsub.subscribe(**{self.name:handler})
 
-    async def unsubscribe(self,*args):
-        return await self.__pubsub.unsubscribe(*args)
+    async def unsubscribe(self):
+        return await self.__pubsub.unsubscribe(self.name)
 
     async def wait_for_message(self, timeout=0.1):
         """定时等待一定时间来接收推送,一定时间过后如果没收到推送就自动返回None
@@ -75,7 +83,7 @@ class Channel:
             now = time.time()
         return None
 
-    async def get_message(self, ignore_subscribe_messages=False):
+    async def get_message(self):
         """
         Get the next message if one is available, otherwise None.
         If timeout is specified, the system will wait for `timeout` seconds
@@ -90,7 +98,8 @@ class Channel:
 
          的字典,如果ignore_subscribe_messages=False,那么还会有哟中type为subscribe的信息发送.
         """
-        return await self.__pubsub.get_message(ignore_subscribe_messages=ignore_subscribe_messages)
+        return await self.__pubsub.get_message(ignore_subscribe_messages=self.ignore_subscribe_messages)
+
     async def listen(self):
         """Listen for messages on channels this client has been subscribed to"""
         return await self.__pubsub.listen()
@@ -100,7 +109,7 @@ class Channel:
         return self.__pubsub.run_in_thread(daemon=daemon)
     def pub_in_thread(self,callback,daemon=False):
         """单独线程起一个pub服务,可以用于有规律的推送一些数据"""
-        thread = PubWorkerThread(self.__redis,callback, daemon=daemon)
+        thread = PubWorkerThread(self,callback, daemon=daemon)
         thread.start()
         return thread
 

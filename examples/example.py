@@ -14,22 +14,22 @@ from sanic.response import json
 # import aioredis
 from sanic_redis import Redis,Namespace
 import ujson
-app = Sanic(__name__)
+app = Sanic('redis_test')
 #redis_pool = aredis.ConnectionPool(host='localhost', port=6379, db=0)
-redis = Redis("redis://localhost:6379/0")
-db = redis(app)
-appspace = Namespace(__name__)
+Redis.SetConfig(app,test="redis://localhost:6379/1")
+Redis(app)
+appspace = Namespace(app.name)
 
 @app.get("/test-my-key/<key>")
 async def handle(request,key):
-    val = await db.get(appspace(key))
+    val = await request.app.redis["test"].get(appspace(key))
     return response.text(val.decode('utf-8'))
 
 @app.post("/test-my-key")
 async def handle(request):
     doc = request.json
     for k,v in doc.items():
-        await db.set(appspace(k), v)
+        await request.app.redis["test"].set(appspace(k), v)
     return json({"result":True})
 
 if __name__ == '__main__':

@@ -6,7 +6,10 @@
 # @License: MIT
 
 import uuid
-import ujson
+try:
+    import ujson
+except:
+    import json as ujson
 import aredis
 from sanic_session.base import BaseSessionInterface, SessionDict
 
@@ -149,5 +152,5 @@ class Core:
             # after each request save the session,
             # pass the response to set client cookies
             await session.save(request, response)
-
+        app.session = self.session
         return app

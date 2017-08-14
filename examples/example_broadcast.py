@@ -15,11 +15,12 @@ from sanic.response import json, text
 from sanic_redis import Broadcast
 import time
 
-app = Sanic(__name__)
+app = Sanic('redis_channel_test')
 
 
-broadcastdb = Broadcast("redis://localhost:6379/0")
-broadcast = broadcastdb(app)
+Broadcast.SetConfig(app,test_channels=("redis://localhost:6379/1",True))
+Broadcast(app)
+
 thread = None
 
 
@@ -30,10 +31,10 @@ def my_handler(x):
 
 @app.listener("before_server_start")
 async def sub(app, loop):
-    await broadcast.subscribe(**{'example_channel1': my_handler})
+    await app.channels["test_channels"].subscribe(my_handler)
     global thread
     print("befor")
-    thread = broadcast.sub_in_thread(daemon=True)
+    thread = app.channels["test_channels"].sub_in_thread(daemon=True)
 @app.listener("before_server_stop")
 async def sub_close(app, loop):
     global thread
@@ -43,7 +44,7 @@ async def sub_close(app, loop):
 @app.post("/test-my-key")
 async def handle(request):
     data = request.json
-    result = await broadcast.publish('example_channel1', data["msg"])
+    result = await app.channels["test_channels"].publish(data["msg"])
     return json({"result":'ok'})
 
 if __name__ == '__main__':

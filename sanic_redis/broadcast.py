@@ -3,7 +3,7 @@ import aredis
 import asyncio
 import time
 import threading
-
+from sanic_redis.standalone import Channel
 
 
 class Core:
@@ -27,15 +27,20 @@ class Core:
             self.REDIS_CHANNEL_SETTINGS = app.config.REDIS_CHANNEL_SETTINGS
             self.app = app
             for dbname, (dburl,ignore_subscribe_messages) in app.config.REDIS_CHANNEL_SETTINGS.items():
-                redis = aredis.StrictRedis.from_url(dburl)
-                if ignore_subscribe_messages:
-                    broadcast = _Broadcast(redis, ignore_subscribe_messages=ignore_subscribe_messages)
-                else:
-                    broadcast = _Broadcast(redis)
+                broadcast = Channel(dburl,dbname, ignore_subscribe_messages=ignore_subscribe_messages)
+
                 self.channels[dbname] = broadcast
         else:
             raise ValueError(
                 "nonstandard sanic config REDIS_CHANNEL_SETTINGS,REDIS_CHANNEL_SETTINGS must be a Dict[dbname,Tuple[dburl,ignore_subscribe_messages]]")
+
+        @app.listener("before_server_stop")
+        async def sub_close(app, loop):
+
+            for name,channel in self.channels.items():
+                channel.pubsub_reset()
+
+            print("after channels closed")
 
 
         if "extensions" not in app.__dir__():

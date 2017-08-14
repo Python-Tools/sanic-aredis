@@ -15,26 +15,26 @@ from sanic.response import json
 from sanic_redis import Cache
 import time
 
-app = Sanic(__name__)
+app = Sanic('redis_test')
 
 def expensive_work(data):
     """some work that waits for io or occupy cpu"""
     time.sleep(2)
     return data
 
-#redis_pool = aredis.ConnectionPool(host='localhost', port=6379, db=0)
-cachedb = Cache("redis://localhost:6379/0")
-cache = cachedb(app)
+Cache.SetConfig(app,test_cache="redis://localhost:6379/1")
+Cache(app)
+
 
 @app.post("/test-my-key")
 async def handle(request):
     data = request.json
-    result = await cache.set('example_key', expensive_work(data), data)
-    return json({"result":cache._gen_identity('example_key', data)})
+    result = await request.app.caches["test_cache"].set('example_key', expensive_work(data), data)
+    return json({"result":request.app.caches["test_cache"]._gen_identity('example_key', data)})
 
 @app.get("/test-my-key/<key>")
 async def handle(request,key):
-    res = await cache.get_by_key(key)
+    res = await request.app.caches["test_cache"].get_by_key(key)
     return json(res)
 
 

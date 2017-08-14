@@ -1,0 +1,19 @@
+[project]
+project_name = sanic-redis
+license = 
+keywords = ['redis', 'sanic']
+version = 0.0.5
+description = simple tools
+url = 
+
+[author]
+author = hsz
+author_email = hsz1273327@gmail.com
+
+[form]
+form = model
+
+[env]
+env = venv
+compiler = python
+

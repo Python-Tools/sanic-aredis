@@ -14,10 +14,10 @@ from sanic.response import json,text
 # import aioredis
 from sanic_redis import Session
 import ujson
-app = Sanic(__name__)
-#redis_pool = aredis.ConnectionPool(host='localhost', port=6379, db=0)
-session = Session("redis://localhost:6379/0")
-app2 = session(app)
+app = Sanic('redis_session_test')
+
+Session.SetConfig(app,"redis://localhost:6379/1")
+Session(app)
 
 @app.route("/")
 async def test(request):

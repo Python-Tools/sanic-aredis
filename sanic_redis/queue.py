@@ -4,7 +4,7 @@ import aredis
 from sanic_redis.standalone import Queue
 
 
-class Core(Base):
+class Core:
 
     @staticmethod
     def SetConfig(app, **confs):

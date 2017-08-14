@@ -1,3 +1,4 @@
-__all__=[Queue]
+__all__=['Queue','Channel']
 
-from queue import Queue
+from .queue import Queue
+from .broadcast import Channel

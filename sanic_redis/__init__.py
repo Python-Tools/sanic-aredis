@@ -10,21 +10,14 @@ from sanic_redis.queue import Core as QueueCore
 from sanic_redis.namespace import Namespace
 
 class Redis(RedisCore):
-    def __init__(self, uri=None):
-        super().__init__(uri)
+    pass
 class Session(SessionCore):
-    def __init__(self, uri=None):
-        super().__init__(uri)
-
+    pass
 class Cache(CacheCore):
-    def __init__(self, uri=None):
-        super().__init__(uri)
+    pass
 
 class Broadcast(BroadcastCore):
-    def __init__(self, uri=None):
-        super().__init__(uri)
-
-
+    pass
+ 
 class Queue(QueueCore):
-    def __init__(self, uri=None):
-        super().__init__(uri)
+    pass
